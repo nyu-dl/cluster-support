@@ -52,7 +52,7 @@ Afaik there are no backups there, use `rm` very carefully.
 
 One can transfer some files to/from any location avaialable to your CIMS account via:
 
-* SSH (scp, rsync etc.)
+#### SSH (scp, rsync etc.)
 
 Example command (assuming you have a working ssh config):
 
@@ -62,7 +62,7 @@ to cims:
 from cims:
 `rsync -chaPvz cims:<remote_path> <local_path>`
 
-* Using GLOBUS transfer service: [learn more](https://www.globus.org/)
+#### Using GLOBUS transfer service: [learn more](https://www.globus.org/)
 
 **NYU HPC has disjoint filesystems from Courant/CILVR**
 
