@@ -1,0 +1,17 @@
+Host cims
+    HostName access.cims.nyu.edu
+    Port 22
+    Compression yes
+    User <USERNAME>
+    IdentityFile <PATH_TO_KEY>
+    ServerAliveInterval 60
+
+Host cassio
+    HostName cassio.cs.nyu.edu
+    Port 22
+    Compression yes
+    User <USERNAME>
+    IdentityFile <PATH_TO_KEY>
+    ForwardAgent yes
+    ServerAliveInterval 60
+    ProxyCommand ssh cims -W %h:%p
