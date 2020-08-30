@@ -98,11 +98,13 @@ Miniconda homepage: [https://docs.conda.io/en/latest/miniconda.html](https://doc
 
 1. Copy the link to the install script in your clipboard and run: `wget <URL>` in the CIMS terminal.
 
-There is no easy way to keep your conda env in home fs (8G quota), so type some location in your big RAID folder as installation path.
+    There is no easy way to keep your conda env in home fs (8G quota), so type some location in your big RAID folder as installation path.
 
-After installation type Y to agree to append neccessary lines into your `.bashrc`. After reconnection or re-login you should be able to run `conda` command.
+    After installation type Y to agree to append neccessary lines into your `.bashrc`. After reconnection or re-login you should be able to run `conda` command.
 
-2. Create conda env: `conda create -n tutorial python=3`. Activate tutorial env: `conda activate tutorial`.
+2. Create conda env: `conda create -n tutorial python=3`. Activate tutorial env: 
+
+    `conda activate tutorial`
 
 3. Install several packages:
 
@@ -176,40 +178,83 @@ As an example of port forwarding we will launch JupyterLab from interactive GPU 
 
 1. Start an interactive job (you may exclude GPU to get it fast if your priority is low at the moment):
 
-`srun --qos=interactive --mem 16G --gres=gpu:1 --constraint=gpu_12gb --pty bash`
+    `srun --qos=interactive --mem 16G --gres=gpu:1 --constraint=gpu_12gb --pty bash`
 
-Note the host name of the machine you got e.g. lion4 (will be needed for port forwarding).
+    Note the host name of the machine you got e.g. lion4 (will be needed for port forwarding).
 
 2. Activate the conda environment with installed JupyterLab:
 
-`conda activate tutorial`
+    `conda activate tutorial`
 
 3. Start JupyterLab
 
-`jupyter lab --no-browser --port <port>`
+    `jupyter lab --no-browser --port <port>`
 
-Explanation:
+    Explanation:
 
-* `--no-browser` means it will not invoke default OS browser (you don't want CLI browser).
+    * `--no-browser` means it will not invoke default OS browser (you don't want CLI browser).
 
-* `--port <port>` means the port JupyterLab will be listening for requests. Usually we choose some 4 digit number to make sure that we do not select any reserved ports like 80 or 443.
+    * `--port <port>` means the port JupyterLab will be listening for requests. Usually we choose some 4 digit number to make sure that we do not select any reserved ports like 80 or 443.
 
 4. Open another tab on your terminal client and run:
 
-`ssh -L <port>:localhost:<port> -J cims <interactive_job_hostname> -N` (job hostname may be short e.g. lion4)
+    `ssh -L <port>:localhost:<port> -J cims <interactive_job_hostname> -N` (job hostname may be short e.g. lion4)
 
-Explanation:
+    Explanation:
 
-* `-L <port>:localhost:<port>` Specifies that the given port on the local (client) host is to be forwarded to the given host and port on the remote side.
+    * `-L <port>:localhost:<port>` Specifies that the given port on the local (client) host is to be forwarded to the given host and port on the remote side.
 
-* `-J cims <other host>` means jump over cims to other host. This uses your ssh config to resolve what does cims mean.
+    * `-J cims <other host>` means jump over cims to other host. This uses your ssh config to resolve what does cims mean.
 
-* `-N` means there will no shell given upon connection, only tunnel will be started.
+    * `-N` means there will no shell given upon connection, only tunnel will be started.
 
 5. Go to your browser and open `localhost:<port>`. You should be able to open JupyterLab page. It may ask you for security token: get it form stdout of interactive job instance.
 
-**Disclaimer:** there are many other ways to get set this up: one may use ssh SOCKS proxy, initialize tunnel from the interactive job itself etc. And all the methods are OK if you can run it. 
+**Disclaimer:** there are many other ways to get set this up: one may use ssh SOCKS proxy, initialize tunnel from the interactive job itself etc. And all the methods are OK if you can run it.
 
 ### Submitting a batch job
 
-TODO
+Batch jobs can be used for any computations where you do not expect your code to crash. In other words, there is no easy way to interrupt or debug running batch job.
+
+Main command to submit a batch job: `sbatch <path_to_script>`.
+
+The first part of the script consist of slurm preprocessing directives such as:
+
+```bash
+#SBATCH --job-name=job_wgpu
+#SBATCH --open-mode=append
+#SBATCH --output=./%j_%x.out
+#SBATCH --error=./%j_%x.err
+#SBATCH --export=ALL
+#SBATCH --time=00:10:00
+#SBATCH --gres=gpu:1
+#SBATCH --constraint=gpu_12gb
+#SBATCH --mem=64G
+#SBATCH -c 4
+```
+
+Similar to arguments we passed to `srun` during interactive job request, here we specify requirements for the batch job.
+
+After `#SBATCH` block one may execute any shell commands or run any script of your choice.
+
+**You can not mix `#SBATCH` lines with other commands, Slurm will not register any `#SBATCH` after the first regular (non-comment) command in the script.**
+
+To submit `job_wgpu` located in `gpu_job.slurm`, go to Cassio node and run:
+
+`sbatch gpu_job.slurm`
+
+#### What happens when you hit enter
+
+Slurm registers your job in the database with corresponding job id. The allocation may not happen instantly and the job will be positioned in the queue.
+
+One can get all available information about the job using:
+
+`scontrol show jobid -dd <job_id>`
+
+**One can only get information about pending or running job with the command above.**
+
+While a job is in the queue, one can hold it from allocation (and later release) using corresponding commands we checked above.
+
+### Managing experiments, running grid search etc
+
+This is out of scope for today tutorial.
