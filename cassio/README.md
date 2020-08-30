@@ -111,3 +111,105 @@ After installation type Y to agree to append neccessary lines into your `.bashrc
 `conda install jupyterlab`
 
 ## Slurm Workload Manager
+
+### Terminal multiplexer / screen / tmux
+
+Tmux or any other multiplexer helps you to run a shell session on Cassio (or any other) node which you can detach from and attach anytime later *without losing the state.*
+
+Learn more about it here: [https://github.com/tmux/tmux/wiki](https://github.com/tmux/tmux/wiki)
+
+### Slurm quotas
+
+1. Hot season (conference deadlines, dense queue)
+
+2. Cold season (summer, sparse queue)
+
+### Cassio node
+
+`cassio.cs.nyu.edu` is the head node from where one can submit a job or request some resources.
+
+**Do not run any intensive jobs on cassio node.**
+
+Popular job management commands:
+
+`sinfo -o --long --Node --format="%.8N %.8T %.4c %.10m %.20f %.30G"` - shows all available nodes with corresponding GPUs installed. **Note features – this allows you to specify the desired GPU.**
+
+`squeue -u ${USER}` - shows state of your jobs in the queue.
+
+`scancel <jobid>` - cancel job with specified id. You can only cancel your own jobs.
+
+`scancel -u ${USER}` - cancel *all* your current jobs, use this one very carefully.
+
+`scancel --name myJobName` - cancel job given the job name.
+
+`scontrol hold <jobid>` - hold pending job from being scheduled. This may be helpful if you noticed that some data/code/files are not ready yet for the particular job.
+
+`scontrol release <jobid>` - release the job from hold.
+
+`scontrol requeue <jobid>` - cancel and submit the job again.
+
+### Running the interactive job
+
+By interactive job we define a shell on a machine (possibly with a GPU) where you can interactively run/debug code or run some software e.g. JupyterLab or Tensorboard.
+
+In order to request a machine and instantly (after Slurm assignment) connect to assigned machine, run:
+
+`srun --qos=interactive --mem 16G --gres=gpu:1 --constraint=gpu_12gb --pty bash`
+
+Explanation:
+
+* `--qos=interactive` means your job will have a special QoS labeled 'interactive'. In our case this means your time limit will be longer than a usual job (7 days?), but there are max 2 jobs per user with such QoS.
+
+* `--mem 16G` means the upper limit of RAM you expect your job to use. Machine will show all its RAM, however Slurm kills the job if it exceeds the requested RAM. **Do not set max possible RAM here, this may decrease your priority over time.** Instead, try to estimate the reasonable amount.
+
+* `--gres=gpu:1` means number of gpus you will see in the requested instance. No gpus if you do not use this arg.
+
+* `--constraint=gpu_12gb` each node has assigned features given what kind of GPU it has. Check `sinfo` command above to output all nodes with all possible features. Features may be combined using logical OR operator as `gpu_12gb|gpu_6gb`.
+
+* `--pty bash` means that after connecting to the instance you will be given the bash shell.
+
+You may remove `--qos` arg and run as many interactive jobs as you wish, if you need that.
+
+#### Port forwarding from the client to Cassio node
+
+As an example of port forwarding we will launch JupyterLab from interactive GPU job shell and connect to it from client browser.
+
+1. Start an interactive job (you may exclude GPU to get it fast if your priority is low at the moment):
+
+`srun --qos=interactive --mem 16G --gres=gpu:1 --constraint=gpu_12gb --pty bash`
+
+Note the host name of the machine you got e.g. lion4 (will be needed for port forwarding).
+
+2. Activate the conda environment with installed JupyterLab:
+
+`conda activate tutorial`
+
+3. Start JupyterLab
+
+`jupyter lab --no-browser --port <port>`
+
+Explanation:
+
+* `--no-browser` means it will not invoke default OS browser (you don't want CLI browser).
+
+* `--port <port>` means the port JupyterLab will be listening for requests. Usually we choose some 4 digit number to make sure that we do not select any reserved ports like 80 or 443.
+
+4. Open another tab on your terminal client and run:
+
+`ssh -L <port>:localhost:<port> -J cims <interactive_job_hostname> -N` (job hostname may be short e.g. lion4)
+
+Explanation:
+
+* `-L <port>:localhost:<port>` Specifies that the given port on the local (client) host is to be forwarded to the given host and port on the remote side.
+
+* `-J cims <other host>` means jump over cims to other host. This uses your ssh config to resolve what does cims mean.
+
+* `-N` means there will no shell given upon connection, only tunnel will be started.
+
+5. Go to your browser and open `localhost:<port>`. You should be able to open JupyterLab page. It may ask you for security token: get it form stdout of interactive job instance.
+
+**Disclaimer:** there are many other ways to get set this up: one may use ssh SOCKS proxy, initialize tunnel from the interactive job itself etc. And all the methods are OK if you can run it. 
+
+### Submitting a batch job
+
+TODO
