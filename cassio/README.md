@@ -24,7 +24,8 @@ These machines do not have any workload manager.
 Everyone has their own home fs mounted in `/home/${USER}`.
 
 Home fs has a limitation of 8GB (yes, eight) and one can check current usage with a command `showusage`:
-```
+
+```text
 [kulikov@cassio ~]$ showusage
 You are using 56% of your 8.0G quota for /home/kulikov.
 You are using 0% of your .4G quota for /web/kulikov.

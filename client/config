@@ -15,3 +15,12 @@ Host cassio
     ForwardAgent yes
     ServerAliveInterval 60
     ProxyCommand ssh cims -W %h:%p
+
+Host prince
+    HostName prince.hpc.nyu.edu
+    Port 22
+    Compression yes
+    User <USERNAME> # DIFFERENT USERNAME HERE GIVEN BY HPC NOT CIMS
+    IdentityFile <PATH_TO_KEY>
+    ServerAliveInterval 60
+    ProxyCommand ssh cims -W %h:%p
