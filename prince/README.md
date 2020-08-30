@@ -98,3 +98,26 @@ As we noted before, one particular difference with Cassio is about GPU allocatio
 #SBATCH --mem=64G
 #SBATCH -c 4
 ```
+
+**Important: do not forget to activate conda env before submitting a job, or make sure you do so in the script.**
+
+Similar to arguments we passed to `srun` during interactive job request, here we specify requirements for the batch job.
+
+After `#SBATCH` block one may execute any shell commands or run any script of your choice.
+
+**You can not mix `#SBATCH` lines with other commands, Slurm will not register any `#SBATCH` after the first regular (non-comment) command in the script.**
+
+To submit `job_wgpu` located in `gpu_job.slurm`, go to Cassio node and run:
+
+`sbatch gpu_job.slurm`
+
+sample output:
+
+```
+Torch cuda available: True
+GPU name: Tesla V100-SXM2-32GB-LS
+
+
+CPU matmul elapsed: 1.1984939575195312 sec.
+GPU matmul elapsed: 0.01778721809387207 sec.
+```

@@ -234,6 +234,8 @@ The first part of the script consist of slurm preprocessing directives such as:
 #SBATCH -c 4
 ```
 
+**Important: do not forget to activate conda env before submitting a job, or make sure you do so in the script.**
+
 Similar to arguments we passed to `srun` during interactive job request, here we specify requirements for the batch job.
 
 After `#SBATCH` block one may execute any shell commands or run any script of your choice.
