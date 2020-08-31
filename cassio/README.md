@@ -17,6 +17,10 @@ In this part we will touch the following aspects of our own cluster:
 Courant has their own park of machines which everyone is welcome to use, learn more about it [here](https://cims.nyu.edu/webapps/content/systems/resources/computeservers).
 These machines do not have any workload manager.
 
+### Connecting between nodes once you are logged on Access node
+
+Add your public key to `~/.ssh/authorized_keys` in order to jump between nodes without password typing each time. **Set restricted permissions on authorized_keys file**: `chmod 644 ~/.ssh/authorized_keys`.
+
 ## Filesystems
 
 ### Home filesystem
