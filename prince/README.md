@@ -126,6 +126,8 @@ GPU matmul elapsed: 0.01778721809387207 sec.
 
 This tutorial assumes that you have already installec conda in your scratch folder. Please note that your conda environment must be stored in $SCRATCH not in $HOME directory. You will get weird buildlock errors otherwise !
 
+We also assume that you have put the Mujoco200 and the license key folder inside ~/.mujoco/ folder.
+
 ```bash
 > conda create -n test_mujoco python=3.6
 
