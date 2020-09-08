@@ -121,3 +121,47 @@ GPU name: Tesla V100-SXM2-32GB-LS
 CPU matmul elapsed: 1.1984939575195312 sec.
 GPU matmul elapsed: 0.01778721809387207 sec.
 ```
+
+# Mujoco Installation on Prince
+
+This tutorial assumes that you have already installed conda in your scratch folder. Please note that your conda environment must be stored in $SCRATCH not in $HOME directory. You will get weird buildlock errors otherwise !
+
+We also assume that you have put the Mujoco200 and the license key folder inside `~/.mujoco` folder.
+
+```bash
+> conda create -n test_mujoco python=3.6
+
+>  singularity exec /beegfs/work/public/singularity/mujoco-200.sif /bin/bash
+
+> conda activate test_mujoco
+
+> pip install mujoco-py
+
+```
+
+
+
+Now, for running a python file, one has to run it inside the Singularity environment. 
+
+You can now run any python file using mujoco using a bash script given here:
+
+```bash
+#!/bin/bash
+
+singularity exec \
+        /beegfs/work/public/singularity/mujoco-200.sif \
+        bash -c "
+export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:$HOME/.mujoco/mujoco200/bin
+source $SCRATCH/pyenv/mujoco-py/bin/activate
+python $*
+"
+```
+
+
+
+You can run a python files by running
+
+```bash
+bash <bash_script> <python_file>
+```
+
