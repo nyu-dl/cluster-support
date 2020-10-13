@@ -30,6 +30,10 @@ Learn more here: [https://sites.google.com/a/nyu.edu/nyu-hpc/systems/prince](htt
 
 Learn more here: [https://sites.google.com/a/nyu.edu/nyu-hpc/documentation/data-management/prince-data](https://sites.google.com/a/nyu.edu/nyu-hpc/documentation/data-management/prince-data)
 
+### Show quota usage for all filesystems
+
+In order to check how much filesystem space you use, run `myquota`.
+
 ## Software management
 
 There is similar environment modules package as in Cassio for general libs/software.
@@ -39,6 +43,8 @@ There is no difference with managing **conda** on Cassio and on Prince except fo
 Learn more here: [https://sites.google.com/a/nyu.edu/nyu-hpc/documentation/prince/packages/conda-environments](https://sites.google.com/a/nyu.edu/nyu-hpc/documentation/prince/packages/conda-environments)
 
 ## Slurm Workload Manager
+
+https://sites.google.com/a/nyu.edu/nyu-hpc/documentation/prince/batch/slurm-best-practices
 
 In general, Slurm behaves similarly on both Cassio and Prince, however there are differences in quotas and how GPU-equipped nodes are distributed:s
 
