@@ -9,11 +9,12 @@ https://sites.google.com/a/nyu.edu/nyu-hpc/systems/greene-cluster
 **Content:**
 1. Greene login nodes
 2. Cluster overview
-3. Singularity - running jobs within a container
-4. Running a batch job with singularity
-5. Setting up a simple sweep over a hyper-parameter using Slurm array job.
-6. Port forwarding to Jupyter Lab
-7. Using a python-based [Submitit](https://github.com/facebookincubator/submitit) framework on Greene
+3. Data migration from Prince
+4. Singularity - running jobs within a container
+5. Running a batch job with singularity
+6. Setting up a simple sweep over a hyper-parameter using Slurm array job.
+7. Port forwarding to Jupyter Lab
+8. Using a python-based [Submitit](https://github.com/facebookincubator/submitit) framework on Greene
 
 ## Greene login nodes
 
@@ -56,6 +57,21 @@ echo $SCRATCH
 * GPU specification through `--gres=gpu:{rtx8000|v100}:1` (Prince uses/used partitions)
 * Low inode quota on home fs (~30k files)
 * No beegfs
+
+## Data migration from Prince
+
+**All filesystems on Greene are brand new i.e. nothing will be migrated from Prince automatically.**
+
+### Copying a folder from Prince to Greene
+
+1. Identify the absoulte path of some dir on Prince you need to transfer: `realpath <PATH>`
+2. Create destination folder on Greene where you wish all the content from `<PATH>` to be copied to: `mkdir <DEST_PATH>`
+
+You may start the transfer from both Prince and Greene (as you wish):
+* from Prince: `rsync -chaPvz <PATH>/ log-2.hpc.nyu.edu:<DEST_PATH>/` (notice trailing slashes)
+* from Greene: `rsync -chaPvz prince.hpc.nyu.edu:<PATH>/ <DEST_PATH>/`
+
+Start such transfer withing tmux/screen to avoid connectivity issues.
 
 ## Singularity
 
