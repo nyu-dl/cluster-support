@@ -24,3 +24,13 @@ Host prince
     IdentityFile <PATH_TO_KEY>
     ServerAliveInterval 60
     ProxyCommand ssh cims -W %h:%p
+
+Host greene
+    HostName log-2.hpc.nyu.edu
+    Port 22
+    Compression yes
+    User <USERNAME> # DIFFERENT USERNAME HERE GIVEN BY HPC NOT CIMS
+    IdentityFile <PATH_TO_KEY>
+    ForwardAgent yes
+    ServerAliveInterval 60
+    ProxyCommand ssh cims -W %h:%p
