@@ -322,16 +322,18 @@ Imp note 1: Please first check if the dataset you need is present in `/scratch/w
 1. Check your current quota usage using `myquota`
 2. Go to your folder that contains your datasets and you can check the number of files using 
 ` for d in $(find $(pwd) -maxdepth 1 -mindepth 1 -type d); do n_files=$(find $d | wc -l); echo $d " " $n_files; done`
-3. I will assume the folder that we want to convert is called DatasetX which contains many files (also handles subfolders with more files). 
-` singularity exec --bind {insert path to folder enclosing DatasetX}/DatasetX:/DatasetX:ro /scratch/work/public/singularity/centos-8.2.2004.sif find /DatasetX | wc -l`
+3. I will assume the folder that we want to convert is called DatasetX which contains many files (also handles subfolders with more files). Let's first make an env variable which points to your dataset as follows:
+`export DATASET_PATH=/path/to/DatasetX`
+Next run:
+` singularity exec --bind DATASET_PATH:/DatasetX:ro /scratch/work/public/singularity/centos-8.2.2004.sif find /DatasetX | wc -l`
 Here you should be able to see the number of files in DatasetX.
 4. Make a folder in your scratch where you want to store your SquashFS files. Move to this folder.
 5. Now we will run `mksquashfs`. 
-`singularity exec --bind {insert path to folder enclosing DatasetX}/DatasetX:/DatasetX:ro /scratch/work/public/singularity/centos-8.2.2004.sif mksquashfs /DatasetX DatasetX.sqf -keep-as-directory`
+`singularity exec --bind DATASET_PATH:/DatasetX:ro /scratch/work/public/singularity/centos-8.2.2004.sif mksquashfs /DatasetX DatasetX.sqf -keep-as-directory`
 6. Now we have SquashFS file DatasetX.sqf, it will have the same number of files inside, but the disk usage will be lower. We can check this as follows:
 `ls -lh DatasetX.sqf`
 and 
-`du -sh {insert path to folder enclosing DatasetX}/DatasetX`
+`du -sh DATASET_PATH`
 
 Now let's make sure we can reach the contents of this SquashFS file : 
 1. Start the singularity container with the SquashFS as an overlay. 
