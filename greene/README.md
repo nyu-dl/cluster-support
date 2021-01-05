@@ -14,8 +14,9 @@ https://sites.google.com/a/nyu.edu/nyu-hpc/systems/greene-cluster
 5. Running a batch job with singularity
 6. Setting up a simple sweep over a hyper-parameter using Slurm array job.
 7. Port forwarding to Jupyter Lab
-8. Using a python-based [Submitit](https://github.com/facebookincubator/submitit) framework on Greene
-9. Making squashfs out of your dataset and accessing it while running your scripts.
+8. Making squashfs out of your dataset and accessing it while running your scripts.
+9. Using a python-based [Submitit](https://github.com/facebookincubator/submitit) framework on Greene
+
 
 ## Greene login nodes
 
@@ -312,9 +313,6 @@ Press Ctrl-C if you want to stop the port forwarding SSH connection.
 
 ***From now on you may run your own Jupyter Lab with RTX8000/V100, congratulations!***
 
-
-## Submitit on greene
-
 ## SquashFS for your read-only files
 
 Here we will convert read-only file such as data to a SquashFS file which reduces the inode load. It also compresses the data so you save on disk space as well. 
@@ -344,3 +342,29 @@ So just as we have done before, this is just an additional overlay that you will
 Imp note 1: After you confirm the SquashFS file is good, you can delete the folder {insert path to folder enclosing DatasetX}/DatasetX to save inode! :D
 
 Imp note 2: If you are using datasets that you think are useful to many others, please send a mail to HPC so that they can make a common SquashFS in /work/public/. This tutorial was assuming you have some specific folder which you frequently use that has many files.
+
+
+## Submitit on greene (Advanced)
+
+Submitit is a python wrapper that makes it super easy to submit jobs, sweeps and handles timeouts and restarts for your job. 
+For examples and docs please see [Submitit](https://github.com/facebookincubator/submitit). 
+
+Here I will assume you have already used submitit as part of your workflow and will only mention what needs to be added so you can use it with Singularity and SquashFS.
+
+We will use the following as our running example: [detr](https://github.com/facebookresearch/detr)
+
+1. Clone the repo `git clone https://github.com/facebookresearch/detr.git`
+2. Make a folder called experiments in your scratch. 
+3. The file changes you need are available in the folder submitit_example.
+    - Make sure you have an overlay ready which has a conda installation as described earlier in the tutorial. Your /ext3/ folder should contain an env.sh file such as the example provided in the submitit_example folder. 
+    - You will need to copy the slurm.py and python-greene files into your desired location. 
+        - `slurm.py`:  This file has the necessary changes that allow the singularity to know about the network details such as port address etc.
+        - `python-greene` : this is an executable file that provides you with the ability to use singularity with submitit.
+Lines 57 and 58 in the python-greene are currently set to use two overlays - one has my conda installation and the other is the SquashFS with the dataset. 
+*For this example, you directly use this file. But for your experiments, you will change line 57 and 58 to point to the right location.* 
+Line 59 binds the slurm.py file that you have copied, to the one that exists internally in the submitit package.
+
+4. Replace the `run_with_submitit.py` file in the detr repo you cloned with the provided one in the submitit_example folder. This file has cluster specific arguments. In lines 31 and 32, add your username so that all the jobs can reach your shared experiment folder.
+You are now ready to run your job! 
+
+(I have also done all the above steps and provided the folder `/scratch/ask762/tutorial` where the only thing you need to change is line 31 & 32 in `detr/run_with_submitit.py` to have your username and you should be able to submit a job :)
