@@ -15,6 +15,7 @@ https://sites.google.com/a/nyu.edu/nyu-hpc/systems/greene-cluster
 6. Setting up a simple sweep over a hyper-parameter using Slurm array job.
 7. Port forwarding to Jupyter Lab
 8. Using a python-based [Submitit](https://github.com/facebookincubator/submitit) framework on Greene
+9. Making squashfs out of your dataset and accessing it while running your scripts.
 
 ## Greene login nodes
 
@@ -310,3 +311,36 @@ To start the tunnel, run: `ssh -L 8965:gr031.nyu.cluster:8965 greene -N`
 Press Ctrl-C if you want to stop the port forwarding SSH connection.
 
 ***From now on you may run your own Jupyter Lab with RTX8000/V100, congratulations!***
+
+
+## Submitit on greene
+
+## SquashFS for your read-only files
+
+Here we will convert read-only file such as data to a SquashFS file which reduces the inode load. It also compresses the data so you save on disk space as well. 
+
+1. Check your current quota usage using `myquota`
+2. Go to your folder that contains your datasets and you can check the number of files using 
+` for d in $(find $(pwd) -maxdepth 1 -mindepth 1 -type d); do n_files=$(find $d | wc -l); echo $d " " $n_files; done`
+3. I will assume the folder that we want to convert is called DatasetX which contains many files (also handles subfolders with more files). 
+` singularity exec --bind {insert path to folder enclosing DatasetX}/DatasetX:/DatasetX:ro /scratch/work/public/singularity/centos-8.2.2004.sif find /DatasetX | wc -l`
+Here you should be able to see the number of files in DatasetX.
+4. Make a folder in your scratch where you want to store your SquashFS files. Move to this folder.
+5. Now we will run `mksquashfs`. 
+`singularity exec --bind {insert path to folder enclosing DatasetX}/DatasetX:/DatasetX:ro /scratch/work/public/singularity/centos-8.2.2004.sif mksquashfs /DatasetX DatasetX.sqf -keep-as-directory`
+6. Now we have SquashFS file DatasetX.sqf, it will have the same number of files inside, but the disk usage will be lower. We can check this as follows:
+`ls -lh DatasetX.sqf`
+and 
+`du -sh {insert path to folder enclosing DatasetX}/DatasetX`
+
+Now let's make sure we can reach the contents of this SquashFS file : 
+1. Start the singularity container with the SquashFS as an overlay. 
+`singularity exec --overlay DatasetX.sqf:ro /scratch/work/public/singularity/cuda11.0-cudnn8-devel-ubuntu18.04.sif /bin/bash`
+2. Go to the following location and you should see your dataset within the container. 
+`cd /DatasetX`
+
+So just as we have done before, this is just an additional overlay that you will add to your Singularity command when running your job :)
+
+Imp note 1: After you confirm the SquashFS file is good, you can delete the folder {insert path to folder enclosing DatasetX}/DatasetX to save inode! :D
+
+Imp note 2: If you are using datasets that you think are useful to many others, please send a mail to HPC so that they can make a common SquashFS in /work/public/. This tutorial was assuming you have some specific folder which you frequently use that has many files.
