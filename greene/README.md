@@ -317,6 +317,8 @@ Press Ctrl-C if you want to stop the port forwarding SSH connection.
 
 Here we will convert read-only file such as data to a SquashFS file which reduces the inode load. It also compresses the data so you save on disk space as well. 
 
+Imp note 1: Please first check if the dataset you need is present in `/scratch/work/public/'. If you are using datasets that you think are useful to many others, please send a mail to HPC so that they can make a common SquashFS in /work/public/. This tutorial was assuming you have some specific folder which you frequently use that has many files.
+
 1. Check your current quota usage using `myquota`
 2. Go to your folder that contains your datasets and you can check the number of files using 
 ` for d in $(find $(pwd) -maxdepth 1 -mindepth 1 -type d); do n_files=$(find $d | wc -l); echo $d " " $n_files; done`
@@ -339,9 +341,8 @@ Now let's make sure we can reach the contents of this SquashFS file :
 
 So just as we have done before, this is just an additional overlay that you will add to your Singularity command when running your job :)
 
-Imp note 1: After you confirm the SquashFS file is good, you can delete the folder {insert path to folder enclosing DatasetX}/DatasetX to save inode! :D
+Imp note 2: After you confirm the SquashFS file is good, you can delete the folder {insert path to folder enclosing DatasetX}/DatasetX to save inode! :D
 
-Imp note 2: If you are using datasets that you think are useful to many others, please send a mail to HPC so that they can make a common SquashFS in /work/public/. This tutorial was assuming you have some specific folder which you frequently use that has many files.
 
 
 ## Submitit on greene (Advanced)
