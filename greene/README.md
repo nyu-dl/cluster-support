@@ -14,7 +14,9 @@ https://sites.google.com/a/nyu.edu/nyu-hpc/systems/greene-cluster
 5. Running a batch job with singularity
 6. Setting up a simple sweep over a hyper-parameter using Slurm array job.
 7. Port forwarding to Jupyter Lab
-8. Using a python-based [Submitit](https://github.com/facebookincubator/submitit) framework on Greene
+8. Making squashfs out of your dataset and accessing it while running your scripts.
+9. Using a python-based [Submitit](https://github.com/facebookincubator/submitit) framework on Greene
+
 
 ## Greene login nodes
 
@@ -310,3 +312,62 @@ To start the tunnel, run: `ssh -L 8965:gr031.nyu.cluster:8965 greene -N`
 Press Ctrl-C if you want to stop the port forwarding SSH connection.
 
 ***From now on you may run your own Jupyter Lab with RTX8000/V100, congratulations!***
+
+## SquashFS for your read-only files
+
+Here we will convert read-only file such as data to a SquashFS file which reduces the inode load. It also compresses the data so you save on disk space as well. 
+
+Imp note 1: Please first check if the dataset you need is present in `/scratch/work/public/datasets/'. If you are using datasets that you think are useful to many others, please send a mail to HPC so that they can make a common SquashFS in /work/public/. This tutorial was assuming you have some specific folder which you frequently use that has many files.
+
+1. Check your current quota usage using `myquota`
+2. Go to your folder that contains your datasets and you can check the number of files using 
+` for d in $(find $(pwd) -maxdepth 1 -mindepth 1 -type d); do n_files=$(find $d | wc -l); echo $d " " $n_files; done`
+3. I will assume the folder that we want to convert is called DatasetX which contains many files (also handles subfolders with more files). Let's first make an env variable which points to your dataset as follows:
+`export DATASET_PATH=/path/to/DatasetX` ,  `export DATASET_NAME=DatasetX` and `export SINGULARITY_DATASET_PATH=/${DATASET_NAME}`  
+Next run:
+`singularity exec --bind ${DATASET_PATH}:${SINGULARITY_DATASET_PATH}:ro /scratch/work/public/singularity/centos-8.2.2004.sif find ${SINGULARITY_DATASET_PATH} | wc -l`
+Here you should be able to see the number of files in DatasetX.
+4. Make a folder in your scratch where you want to store your SquashFS files. Move to this folder.
+5. Now we will run `mksquashfs`. 
+`singularity exec --bind ${DATASET_PATH}:${SINGULARITY_DATASET_PATH}:ro /scratch/work/public/singularity/centos-8.2.2004.sif mksquashfs ${SINGULARITY_DATASET_PATH} ${DATASET_NAME}.sqf -keep-as-directory`
+6. Now we have SquashFS file DatasetX.sqf, it will have the same number of files inside, but the disk usage will be lower. We can check this as follows:
+`ls -lh ${DATASET_NAME}.sqf`
+and 
+`du -sh ${DATASET_PATH}`
+
+Now let's make sure we can reach the contents of this SquashFS file : 
+1. Start the singularity container with the SquashFS as an overlay. 
+`singularity exec --overlay ${DATASET_NAME}.sqf:ro /scratch/work/public/singularity/cuda11.0-cudnn8-devel-ubuntu18.04.sif /bin/bash`
+2. Go to the following location and you should see your dataset within the container. 
+`cd /DatasetX`
+
+So just as we have done before, this is just an additional overlay that you will add to your Singularity command when running your job :)
+
+Imp note 2: After you confirm the SquashFS file is good, you can delete the folder {insert path to folder enclosing DatasetX}/DatasetX to save inode! :D
+
+
+
+## Submitit on greene (Advanced)
+
+Submitit is a python wrapper that makes it super easy to submit jobs, sweeps and handles timeouts and restarts for your job. 
+For examples and docs please see [Submitit](https://github.com/facebookincubator/submitit). 
+
+Here I will assume you have already used submitit as part of your workflow and will only mention what needs to be added so you can use it with Singularity and SquashFS.
+
+We will use the following as our running example: [detr](https://github.com/facebookresearch/detr)
+
+1. Clone the repo `git clone https://github.com/facebookresearch/detr.git`
+2. Make a folder called experiments in your scratch. 
+3. The file changes you need are available in the folder submitit_example.
+    - Make sure you have an overlay ready which has a conda installation as described earlier in the tutorial. Your /ext3/ folder should contain an env.sh file such as the example provided in the submitit_example folder. 
+    - You will need to copy the slurm.py and python-greene files into your desired location. 
+        - `slurm.py`:  This file has the necessary changes that allow the singularity to know about the network details such as port address etc.
+        - `python-greene` : this is an executable file that provides you with the ability to use singularity with submitit.
+Lines 57 and 58 in the python-greene are currently set to use two overlays - one has my conda installation and the other is the SquashFS with the dataset. 
+*For this example, you directly use this file. But for your experiments, you will change line 57 and 58 to point to the right location.* 
+Line 59 binds the slurm.py file that you have copied, to the one that exists internally in the submitit package.
+
+4. Replace the `run_with_submitit.py` file in the detr repo you cloned with the provided one in the submitit_example folder. This file has cluster specific arguments. In lines 31 and 32, add your username so that all the jobs can reach your shared experiment folder.
+You are now ready to run your job! 
+
+(I have also done all the above steps and provided the folder `/scratch/ask762/tutorial` where the only thing you need to change is line 31 & 32 in `detr/run_with_submitit.py` to have your username and you should be able to submit a job :)

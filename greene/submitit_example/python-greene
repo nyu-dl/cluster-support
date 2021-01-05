@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# https://stackoverflow.com/questions/1668649/how-to-keep-quotes-in-bash-arguments
+args=''
+for i in "$@"; do
+    i="${i//\\/\\\\}"
+    args="$args \"${i//\"/\\\"}\""
+done
+
+module purge
+
+export PATH=/share/apps/singularity/bin:$PATH
+
+# file systems
+export SINGULARITY_BINDPATH=/mnt,/scratch,/share/apps
+if [ -d /state/partition1 ]; then
+    export SINGULARITY_BINDPATH=$SINGULARITY_BINDPATH,/state/partition1
+fi
+
+# IB related drivers and libraries
+export SINGULARITY_BINDPATH=$SINGULARITY_BINDPATH,/etc/libibverbs.d,/usr/lib64/libibverbs,/usr/lib64/ucx,/usr/include/infiniband,/lib64/libibverbs,/usr/include/rdma
+export SINGULARITY_BINDPATH=$SINGULARITY_BINDPATH,$(echo /usr/bin/ib*_* /usr/sbin/ib* \
+                                                         /usr/lib64/libpmi* \
+                                                         /lib64/libmlx*.so* \
+                                                         /lib64/libib*.so* \
+                                                         /lib64/libnl* \
+                                                         /usr/include/uc[m,p,s,t] \
+                                                         /usr/lib64/libuc[m,p,s,t].so* \
+                                                         /lib64/libosmcomp.so* \
+                                                         /lib64/librdmacm*.so* | sed -e 's/ /,/g')
+
+if [ -d /opt/slurm/lib64 ]; then
+    export SINGULARITY_CONTAINLIBS=$(echo /opt/slurm/lib64/libpmi* | xargs | sed -e 's/ /,/g')
+fi
+
+export SINGULARITY_BINDPATH=$SINGULARITY_BINDPATH,/opt/slurm,/usr/lib64/libmunge.so.2.0.0,/usr/lib64/libmunge.so.2,/var/run/munge,/etc/passwd
+
+export SINGULARITY_BINDPATH=$SINGULARITY_BINDPATH,/usr/bin/uuidgen
+
+export SINGULARITYENV_PREPEND_PATH=/opt/slurm/bin
+
+export SINGULARITYENV_LD_LIBRARY_PATH=/lib64:/lib64/libibverbs
+
+export SINGULARITY_CONTAINLIBS=/lib64/libmnl.so.0
+export SINGULARITY_BINDPATH=$SINGULARITY_BINDPATH,/usr/sbin/ip,/usr/bin/strace,/usr/sbin/ifconfig
+
+nv=""
+if [[ "$(hostname -s)" =~ ^g ]]; then nv="--nv"; fi
+
+export MYPYTHON=$(readlink -e $0)
+
+#if [ "$SLURM_JOBID" != "" ]; then strace="strace"; fi
+
+sif=/scratch/work/public/singularity/cuda10.1-cudnn7-devel-ubuntu18.04.sif
+
+singularity exec $nv \
+            --overlay /scratch/ask762/tutorial/pytorch1.6.0-cuda10.1.ext3:ro \
+            --overlay /scratch/ask762/tutorial/multimodal_datasets.sqf:ro \
+            --bind /scratch/ask762/tutorial/slurm.py:/ext3/miniconda3/lib/python3.8/site-packages/submitit/slurm/slurm.py:ro \
+            $sif \
+            /bin/bash -c "
+source /ext3/env.sh
+\$(which python) $args
+exit
+"
