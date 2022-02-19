@@ -295,17 +295,17 @@ Expected output:
 [I 15:51:47.644 LabApp] JupyterLab application directory is /ext3/miniconda3/share/jupyter/lab
 [I 15:51:47.646 LabApp] Serving notebooks from local directory: /home/ik1147
 [I 15:51:47.646 LabApp] Jupyter Notebook 6.1.4 is running at:
-[I 15:51:47.646 LabApp] http://gr031.nyu.cluster:8965/
+[I 15:51:47.646 LabApp] http://gr031.hpc.nyu.edu:8965/
 [I 15:51:47.646 LabApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
 ```
 
-Note the hostname of the node we run from here: `http://gr031.nyu.cluster:8965/`
+Note the hostname of the node we run from here: `http://gr031.hpc.nyu.edu:8965/`
 
 ### Part 2: Forwarding the connection from you local client to Greene.
 
 [Check here the ssh config](https://github.com/nyu-dl/cluster-support/blob/master/client/config) with the greene host to make the port forwarding easier to setup.
 
-To start the tunnel, run: `ssh -L 8965:gr031.nyu.cluster:8965 greene -N`
+To start the tunnel, run: `ssh -L 8965:gr031.hpc.nyu.edu:8965 greene -N`
 
 **Note the hostname should be equal to the node where jupyter is running. Same with the port.**
 
