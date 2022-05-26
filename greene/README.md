@@ -85,17 +85,17 @@ The main idea of using a container is to provide an isolated user space on a com
 
 Each singularity container has a definition file (`.def`) and the image file (`.sif`). Lets consider the following container:
 
-`/scratch/work/public/singularity/cuda10.1-cudnn7-devel-ubuntu18.04-20201207.def`
-`/scratch/work/public/singularity/cuda10.1-cudnn7-devel-ubuntu18.04-20201207.sif`
+`/scratch/work/public/singularity/cuda11.1-cudnn8-devel-ubuntu18.04.def`
+`/scratch/work/public/singularity/cuda11.1-cudnn8-devel-ubuntu18.04.sif`
 
 Definiton file contains all commands which are executed along the way when the image OS is created, take a look!
 
-This particular image will have CUDA 10.1 with cudnn 7 libs within Ubuntu 18.04 OS.
+This particular image will have CUDA 11.1 with cudnn 8 libs within Ubuntu 18.04 OS.
 
 Lets execute this container with singularity:
 
 ```bash
-[ik1147@log-2 ~]$ singularity exec /scratch/work/public/singularity/cuda10.1-cudnn7-devel-ubuntu18.04-20201207.sif /bin/bash
+[ik1147@log-2 ~]$ singularity exec /scratch/work/public/singularity/cuda11.1-cudnn8-devel-ubuntu18.04.sif /bin/bash
 Singularity> uname -a
 Linux log-2.nyu.cluster 4.18.0-193.28.1.el8_2.x86_64 #1 SMP Fri Oct 16 13:38:49 EDT 2020 x86_64 x86_64 x86_64 GNU/Linux
 Singularity> lsb_release -a
@@ -129,7 +129,8 @@ There are two different modes when mounting the overlayfs:
 Setting up your fs image:
 1. Copy the empty fs gzip to your scratch path (e.g. `/scratch/<NETID>/` or `$SCRATCH` for your root scratch): `cp /scratch/work/public/overlay-fs-ext3/overlay-50G-10M.ext3.gz $SCRATCH/`
 2. Unzip the archive: `gunzip -v $SCRATCH/overlay-50G-10M.ext3.gz` (can take a while to unzip...)
-3. Execute container with overlayfs (check comment below about `rw` arg): `singularity exec --overlay $SCRATCH/overlay-50G-10M.ext3:rw /scratch/work/public/singularity/cuda10.1-cudnn7-devel-ubuntu18.04-20201207.sif /bin/bash`
+3. Execute container with overlayfs (check comment below about `rw` arg): `singularity exec --overlay $SCRATCH/overlay-50G-10M.ext3:rw /scratch/work/public/singularity/
+.1-cudnn7-devel-ubuntu18.04-20201207.sif /bin/bash`
 4. Check file systems: `df -h`. There will be a record: `overlay          53G   52M   50G   1% /`. The size equals to the filesystem image you chose. **The actual content of the image is mounted in `/ext3`.**
 5. Create a file in overlayfs: `touch /ext3/testfile`
 6. Exit from Singularity
@@ -139,7 +140,7 @@ One has permission for file creation since the fs was mounted with `rw` arg. In 
 Setting up conda environment:
 
 1. Start a CPU (GPU if you want/need) job: `srun --nodes=1 --tasks-per-node=1 --cpus-per-task=1 --mem=32GB --time=1:00:00 --gres=gpu:1 --pty /bin/bash`
-2. Start singularity (notice `--nv` for GPU propagation): `singularity exec --nv --overlay $SCRATCH/overlay-50G-10M.ext3:rw /scratch/work/public/singularity/cuda10.1-cudnn7-devel-ubuntu18.04-20201207.sif /bin/bash`
+2. Start singularity (notice `--nv` for GPU propagation): `singularity exec --nv --overlay $SCRATCH/overlay-50G-10M.ext3:rw /scratch/work/public/singularity/cuda11.1-cudnn8-devel-ubuntu18.04.sif /bin/bash`
 3. Install your conda env in `/ext3`: https://github.com/nyu-dl/cluster-support/tree/master/cassio#conda-environment.
     3.1. `wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh`
     3.2. `bash ./Miniconda3-latest-Linux-x86_64.sh -b -p /ext3/miniconda3`
@@ -149,7 +150,7 @@ Setting up conda environment:
 By now you have a working conda environment located in a ext3 image filesystem here: `$SCRATCH/overlay-50G-10M.ext3`. 
 
 Let's run the container with **read-only** layerfs now (notice `ro` arg there):
-`singularity exec --nv --overlay $SCRATCH/overlay-50G-10M.ext3:ro /scratch/work/public/singularity/cuda10.1-cudnn7-devel-ubuntu18.04-20201207.sif /bin/bash`
+`singularity exec --nv --overlay $SCRATCH/overlay-50G-10M.ext3:ro /scratch/work/public/singularity/cuda11.1-cudnn8-devel-ubuntu18.04.sif /bin/bash`
 
 ```bash
 Singularity> conda activate
@@ -211,7 +212,7 @@ This is an example batch job submission script (also as a file `gpu_job.slurm` i
 #SBATCH --mem=64G
 #SBATCH -c 4
 
-singularity exec --nv --overlay $SCRATCH/overlay-50G-10M.ext3:ro /scratch/work/public/singularity/cuda10.1-cudnn7-devel-ubuntu18.04-20201207.sif /bin/bash -c "
+singularity exec --nv --overlay $SCRATCH/overlay-50G-10M.ext3:ro /scratch/work/public/singularity/cuda11.1-cudnn8-devel-ubuntu18.04.sif /bin/bash -c "
 
 source /ext3/env.sh
 conda activate
@@ -284,7 +285,7 @@ cat *out
 ### Part 1: launching JupyterLab on Greene.
 
 1. Launch interactive job with a gpu: `srun --nodes=1 --tasks-per-node=1 --cpus-per-task=1 --mem=32GB --time=1:00:00 --gres=gpu:1 --pty /bin/bash`
-2. Execute singularity container: `singularity exec --nv --overlay $SCRATCH/overlay-50G-10M.ext3:ro /scratch/work/public/singularity/cuda10.1-cudnn7-devel-ubuntu18.04-20201207.sif /bin/bash`
+2. Execute singularity container: `singularity exec --nv --overlay $SCRATCH/overlay-50G-10M.ext3:ro /scratch/work/public/singularity/cuda11.1-cudnn8-devel-ubuntu18.04.sif /bin/bash`
 3. Activate conda (base env in this case): `conda activate`
 4. Start jupyter lab: `jupyter lab --ip 0.0.0.0 --port 8965 --no-browser`
 
